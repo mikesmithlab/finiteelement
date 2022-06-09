@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patch
-from DataAnalysis.select_data import get_pts
+
+
 
 def read_gmsh(mesh_file,nodes_in_element=4):
     """
@@ -19,7 +19,7 @@ def read_gmsh(mesh_file,nodes_in_element=4):
     element_nodes   : A 2D numpy array of element node ids  [[1,4,5,7], [3,4,6,7]...]
     """
 
-    with open(mesh_dir + mesh_filename, 'r') as f:
+    with open(mesh_file, 'r') as f:
         msh = f.read()
 
     node_data = msh.split('$Nodes')[1].split('$EndNodes')[0].split('\n')[1:-1]
@@ -66,40 +66,29 @@ def read_gmsh(mesh_file,nodes_in_element=4):
 
     return node_ids, node_coords, element_ids, element_nodes, msh_params
 
-def show_msh(node_ids, node_coords, element_ids, element_nodes):
-    x = node_coords[:,0]
-    y = node_coords[:,1]
-
-    fig, ax = plt.subplots()
-    fig.gca().set_aspect('equal',adjustable='box')
-
-    node_pts = ax.scatter(x,y,s=5,c='r')
-    for n, element in enumerate(element_nodes):
-        x = np.array([node_coords[element[0]-1][0],node_coords[element[1]-1][0],node_coords[element[2]-1][0],node_coords[element[3]-1][0]])
-        y = np.array([node_coords[element[0]-1][1],node_coords[element[1]-1][1],node_coords[element[2]-1][1],node_coords[element[3]-1][1]])
-        ax.add_patch(patch.Polygon(xy=list(zip(x,y)),facecolor='gray',alpha=0.2))
-        ax.add_patch(patch.Polygon(xy=list(zip(x,y)),fill=None,edgecolor='gray',alpha=1))
-    
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('y (m)')
-    return ax, node_pts
 
 
-def set_constraint(ax, node_pts,type='Lasso'):
-    get_pts(ax, node_pts,type=type,enter_closes=True)
+
+
 
    
 
 
 if __name__ == '__main__':
-    mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    mesh_filename = 'rect.msh'
+    mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    #mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    mesh_filename = 'pdms_stamp.msh'
 
     node_ids, node_coords, element_ids, element_nodes, msh_params = read_gmsh(mesh_dir + mesh_filename)
 
     ax, node_pts = show_msh(node_ids, node_coords, element_ids, element_nodes)
+    add_buttons(ax)
+    #set_constraint(ax, node_pts)
+    plt.show()
+    #point loads
+    #distributed loads
+    #fixed x / y
     
-    constrained_node_id, value = set_constraint(ax, node_pts)
 
     
 
