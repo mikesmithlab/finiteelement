@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from visualise import show_msh
 from DataAnalysis.select_data import get_pts
+from gmsh import read_gmsh
 
     
 def set_constraint(node_ids, node_coords, element_nodes, DoF=None, value=None):
@@ -17,8 +18,8 @@ def set_constraint(node_ids, node_coords, element_nodes, DoF=None, value=None):
     else:
         raise Exception
 
-    subplot_kw = dict(autoscale_on=True)
-    fig, ax = plt.subplots(subplot_kw=subplot_kw)
+    
+    fig, ax = plt.subplots()
     ax, node_pts = show_msh(ax, node_coords, element_nodes)
 
     constrained_node_ids, _ = get_pts(ax, node_pts, type='Rectangle',enter_closes=True)
@@ -27,7 +28,7 @@ def set_constraint(node_ids, node_coords, element_nodes, DoF=None, value=None):
     displacement_constraints[:,0] = node_ids
     if constrained_node_ids is not None:
         for node_id in constrained_node_ids:
-            displacement_constraints[node_id-1][DoF+1]=value
+            displacement_constraints[node_id][DoF+1]=value
     return displacement_constraints
 
 def combine_constraints(constraint, total=None, add=False):
@@ -62,8 +63,8 @@ if __name__ == '__main__':
     #mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
     mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
     mesh_filename = 'rect.msh'
-    #constraint_type = 'Displacement'
-    constraint_type = 'Force'
+    constraint_type = 'Displacement'
+    #constraint_type = 'Force'
 
     node_ids, node_coords, element_ids, element_nodes, msh_params = read_gmsh(mesh_dir + mesh_filename)
 
@@ -73,10 +74,10 @@ if __name__ == '__main__':
         constraints = combine_constraints(values)
         constraints = combine_constraints(values2, total=constraints)
     else:
-        values = set_constraint(node_ids, node_coords, element_nodes, DoF='x',value=0)
-        values2 = set_constraint(node_ids, node_coords, element_nodes, DoF='y',value=-20)
+        values = set_constraint(node_ids, node_coords, element_nodes, DoF='y',value=-10000)
+        #values2 = set_constraint(node_ids, node_coords, element_nodes, DoF='y',value=-10000)
         constraints = combine_constraints(values)
-        constraints = combine_constraints(values2, total=constraints)
+        #constraints = combine_constraints(values2, total=constraints)
       
 
     np.savetxt(mesh_dir + mesh_filename[:-4] + '_' + constraint_type + '.constraint', constraints)

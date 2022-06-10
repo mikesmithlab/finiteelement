@@ -1,9 +1,24 @@
 from gmsh import read_gmsh
 import numpy as np
-from stiffness_matrix import calculate_ke, add_ke2KP, build_KP, get_stiffness_matrix
-from displacements import restrained_DoF, calc_global_disp, calc_new_node_coords
+from stiffness_matrix import build_KP, get_stiffness_matrix
+from displacements import restrained_DoF, calc_global_disp
 from forces import get_reduced_force_vector
 from visualise import plot_deformation
+
+def text_output(disp_ids, FG):
+    print(disp_ids)
+    print('Reactions')
+    print('----------------------------------')
+    for id in disp_ids:
+        if id%2!=0:
+            Ry = FG[id]
+            print('Ry at node {id} = {Ry} kN'.format(id=id,Ry=np.round(Ry/1000,2)))
+        else:
+            Rx = FG[id]
+            print('Rx at node {id} = {Rx} kN'.format(id=id,Rx=np.round(Rx/1000,2)))
+        
+
+    
 
 if __name__ == '__main__':
     #mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
@@ -34,7 +49,7 @@ if __name__ == '__main__':
 
     disp = np.loadtxt(mesh_dir + mesh_filename[:-4] + '_Displacement.constraint')
     force = np.nan_to_num(np.loadtxt(mesh_dir + mesh_filename[:-4] + '_Force.constraint'), copy=False, nan=0.0)
- 
+    print(force)
     #Build the force vector
     F = np.reshape(force[:,1:],(2*np.shape(force)[0],1))
     
@@ -61,4 +76,10 @@ if __name__ == '__main__':
     FG=np.matmul(KP,UG)
 
     #Display deflection
-    plot_deformation(node_coords, UG)
+    plot_deformation(node_coords, UG, element_nodes,scale=1)
+
+    #Text output
+    text_output(disp_ids, FG)
+
+    
+

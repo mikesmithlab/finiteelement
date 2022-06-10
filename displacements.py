@@ -8,7 +8,7 @@ def restrained_DoF(displacements):
     """
     dispx_ids = displacements[:,:2]
     dispx_ids = 2*dispx_ids[~np.isnan(dispx_ids).any(axis=1)][:,0]-2
-    dispy_ids = np.delete(disp, 1, axis=1)
+    dispy_ids = np.delete(displacements, 1, axis=1)
     dispy_ids = 2*dispy_ids[~np.isnan(dispy_ids).any(axis=1)][:,0]-1
     disp_ids =  np.int_(np.concatenate((dispx_ids,dispy_ids))) 
     return disp_ids
@@ -27,7 +27,5 @@ def calc_global_disp(U, disp_ids, disp):
     return UG
 
 def calc_new_node_coords(node_coords, UG, scale=1):
-    print(node_coords)
-    print(UG.reshape((-1,2)))
     node_coords[:,:2]=node_coords[:,:2]+scale*UG.reshape((-1,2))
     return node_coords
