@@ -1,42 +1,8 @@
-
 import sys
-import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.patches as patch
+import numpy as np
+from visualise import show_msh
 from DataAnalysis.select_data import get_pts
-from gmsh import read_gmsh
-
-
-
-
-
-
-
-
-
-        
-    
-def show_msh(ax, node_coords, element_nodes):
-    #Plot node pts
-    node_pts = ax.scatter(node_coords[:,0],node_coords[:,1],s=5,c='b')
-
-    #Plot gray patch for mesh
-    for n, element in enumerate(element_nodes):
-        x = np.array([node_coords[element[0]-1][0],node_coords[element[1]-1][0],node_coords[element[2]-1][0],node_coords[element[3]-1][0]])
-        y = np.array([node_coords[element[0]-1][1],node_coords[element[1]-1][1],node_coords[element[2]-1][1],node_coords[element[3]-1][1]])
-        ax.add_patch(patch.Polygon(xy=list(zip(x,y)),facecolor='gray',alpha=0.1))
-        ax.add_patch(patch.Polygon(xy=list(zip(x,y)),fill=None,edgecolor='gray',alpha=0.8))
-    
-   
-    
-    ax.set_xlabel('x (m)')
-    ax.set_ylabel('y (m)')
-    return ax, node_pts
-
-
-    
-
-
 
     
 def set_constraint(node_ids, node_coords, element_nodes, DoF=None, value=None):
@@ -93,15 +59,13 @@ def combine_constraints(constraint, total=None, add=False):
 
 
 if __name__ == '__main__':
-    mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    #mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    #mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
     mesh_filename = 'rect.msh'
     #constraint_type = 'Displacement'
     constraint_type = 'Force'
 
-
     node_ids, node_coords, element_ids, element_nodes, msh_params = read_gmsh(mesh_dir + mesh_filename)
-    
 
     if constraint_type == 'Displacement':
         values = set_constraint(node_ids, node_coords, element_nodes, DoF='x',value=0)

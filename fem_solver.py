@@ -1,66 +1,15 @@
 from gmsh import read_gmsh
 import numpy as np
-
-def calculate_ke(alpha, sp, x, y):
-        KE = np.zeros([8,8])
-
-        #Sum across all 'r' sample points
-        for i, r in enumerate(sp):
-            for j, s in enumerate(sp):
-                #partial derivatives of shape functions
-                dh1dr = 0.25*(1+s)
-                dh2dr = -0.25*(1-s)
-                dh3dr = -0.25*(1-s)
-                dh4dr = 0.25*(1+s)
-
-                dh1ds = 0.25*(1+r)
-                dh2ds = -0.25*(1-r)
-                dh3ds = -0.25*(1-r)
-                dh4ds = 0.25*(1+r)
-
-                #Components of Jacobian Matrix
-                dxdr = x[0]*dh1dr + x[1]*dh2dr + x[2]*dh3dr + x[3]*dh4dr
-                dxds = x[0]*dh1ds + x[1]*dh2ds + x[2]*dh3ds + x[3]*dh4ds
-                dydr = y[0]*dh1dr + y[1]*dh2dr + y[2]*dh3dr + y[3]*dh4dr
-                dyds = y[0]*dh1ds + y[1]*dh2ds + y[2]*dh3ds + y[3]*dh4ds
-
-                #Build Jacobian and inverse
-                J = np.matrix([[dxdr, dydr],[dxds, dyds]])
-                invJ = J.I
-                detJ = np.linalg.det(J)
-
-                #Compile matrices of partial derivs of H1 and H2
-                dH1 = np.matrix([[dh1dr, 0,dh2dr, 0,dh3dr, 0,dh4dr, 0],[dh1ds, 0,dh2ds, 0,dh3ds, 0,dh4ds, 0]])
-                dH2 = np.matrix([[0, dh1dr, 0,dh2dr, 0,dh3dr, 0,dh4dr],[0,dh1ds, 0,dh2ds, 0,dh3ds, 0,dh4ds]])
-
-                #Calculate the Strain Displacement Matrix
-                B = np.matrix([[1,0],[0,0],[0,1]])*invJ*dH1 + np.matrix([[0,0],[0,1],[1,0]])*invJ*dH2
-
-                KE = KE + alpha[i]*alpha[j]*t*B.T*C*B*detJ
-        return KE
-
-
-def add_localKE(KE, ke):
-    pass
-
-
-def build_KE(elements):
-    num_elements = np.shape(elements)[0]
-    KE = np.zeros([num_elements, num_elements])
-
-    for n, element in enumerate(elements):
-
-        node1 = element[0]
-        node2 = element[1]
-        node3 = element[2]
-        node4 = element[3]
-
-        
-
-
-
+from stiffness_matrix import calculate_ke, add_ke2KP, build_KP, get_stiffness_matrix
+from displacements import restrained_DoF, calc_global_disp, calc_new_node_coords
+from forces import get_reduced_force_vector
+from visualise import plot_deformation
 
 if __name__ == '__main__':
+    #mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
+    mesh_filename = 'rect.msh'
+    
     """
     Fundamental constants / parameter setting
     """
@@ -79,30 +28,37 @@ if __name__ == '__main__':
     alpha = [1, 1]
     sp = [-0.5773502692, 0.5773502692] # Sampling points
 
-    
-
-
-
-
-
-
-
-    mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    #mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    mesh_filename = 'rect.msh'
+    """End parameter setting"""
 
     node_ids, node_coords, element_ids, element_nodes, msh_params = read_gmsh(mesh_dir + mesh_filename)
 
     disp = np.loadtxt(mesh_dir + mesh_filename[:-4] + '_Displacement.constraint')
     force = np.nan_to_num(np.loadtxt(mesh_dir + mesh_filename[:-4] + '_Force.constraint'), copy=False, nan=0.0)
-
-
-
-    #Assign Point Loads
-    # He uses P for magnitude and pointLoadAxis to indicate direction
+ 
+    #Build the force vector
+    F = np.reshape(force[:,1:],(2*np.shape(force)[0],1))
     
-    #Build the global force vector
-    forceVector = np.reshape(force[:,1:],(2*np.shape(force)[0],1))
-    
-    #Element Stiffness Matrix
-    
+    #Global Stiffness Matrix
+    KP = build_KP(node_coords, element_nodes, alpha=alpha, sp=sp, t=t, C=C)
+
+    #Find restrained DoF
+    disp_ids = restrained_DoF(disp)
+   
+
+    #Extract Structure Stiffness Matrix - Delete rows and columns
+    KS = get_stiffness_matrix(KP, disp_ids)
+
+    #Construct reduced force vector
+    F_red = get_reduced_force_vector(F, disp_ids)
+
+    #Solve for structure
+    U = KS.I * F_red
+
+    #Get global displacement vector
+    UG=calc_global_disp(U, disp_ids, disp)
+
+    #Global force vector
+    FG=np.matmul(KP,UG)
+
+    #Display deflection
+    plot_deformation(node_coords, UG)

@@ -27,11 +27,6 @@ def read_gmsh(mesh_file,nodes_in_element=4):
     msh_params = {}
     msh_params['node'] = {}
     msh_params['element'] = {}
-    
-    #Extract node data
-    msh_params['node']['total_num'] = int(node_data[0].split(' ')[1])
-    msh_params['node']['id_min'] = int(node_data[0].split(' ')[2])
-    msh_params['node']['id_max'] = int(node_data[0].split(' ')[3])
 
     node_ids = []
     node_coords = []
@@ -46,10 +41,11 @@ def read_gmsh(mesh_file,nodes_in_element=4):
     node_ids = np.array(node_ids)
     node_coords = np.array(node_coords)
 
-    #Extract element data
-    msh_params['element']['total_num'] = int(element_data[0].split(' ')[1])
-    msh_params['element']['id_min'] = int(element_data[0].split(' ')[2])
-    msh_params['element']['id_max'] = int(element_data[0].split(' ')[3])
+    #Extract node data
+    msh_params['node']['total_num'] = int(np.size(node_ids))
+    msh_params['node']['min_id'] = np.min(node_ids)
+    msh_params['node']['max_id'] = np.max(node_ids)
+   
 
     element_ids = []
     element_nodes = []
@@ -64,6 +60,15 @@ def read_gmsh(mesh_file,nodes_in_element=4):
     element_ids = np.array(element_ids)
     element_nodes = np.array(element_nodes)
 
+    #Extract element data
+    msh_params['element']['total_num'] = int(np.size(element_ids))
+    msh_params['element']['min_id'] = np.min(element_ids)
+    msh_params['element']['max_id'] = np.max(element_ids)
+
+    assert msh_params['node']['max_id'] - msh_params['node']['min_id'] == np.shape(node_ids)[0]-1
+    assert msh_params['element']['max_id'] - msh_params['element']['min_id'] == np.shape(element_ids)[0]-1
+
+    element_ids = element_ids - msh_params['element']['min_id'] + 1
     return node_ids, node_coords, element_ids, element_nodes, msh_params
 
 
@@ -72,27 +77,3 @@ def read_gmsh(mesh_file,nodes_in_element=4):
 
 
    
-
-
-if __name__ == '__main__':
-    mesh_dir = "C:\\Users\\ppzmis\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    #mesh_dir = "C:\\Users\\mikei\\OneDrive - The University of Nottingham\\Documents\\FEM\\MeshFiles\\"
-    mesh_filename = 'pdms_stamp.msh'
-
-    node_ids, node_coords, element_ids, element_nodes, msh_params = read_gmsh(mesh_dir + mesh_filename)
-
-    ax, node_pts = show_msh(node_ids, node_coords, element_ids, element_nodes)
-    add_buttons(ax)
-    #set_constraint(ax, node_pts)
-    plt.show()
-    #point loads
-    #distributed loads
-    #fixed x / y
-    
-
-    
-
-
-
-
-
